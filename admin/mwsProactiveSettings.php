@@ -9,10 +9,10 @@ $APPLICATION->SetTitle("Настройки клиента");
 
     <link rel="icon" href="/local/modules/mws.proactive/admin/favicon.ico">
 
-    <script defer="defer" src="/local/modules/mws.proactive/admin/js/chunk-vendors.6d610072.js"></script>
-    <script defer="defer" src="/local/modules/mws.proactive/admin/js/app.22ee41f0.js"></script>
+    <script defer="defer" src="/local/modules/mws.proactive/admin/js/chunk-vendors.99ca11b0.js"></script>
+    <script defer="defer" src="/local/modules/mws.proactive/admin/js/app.456324cc.js"></script>
     <link href="/local/modules/mws.proactive/admin/css/chunk-vendors.02274daf.css" rel="stylesheet">
-    <link href="/local/modules/mws.proactive/admin/css/app.b7b06670.css" rel="stylesheet">
+    <link href="/local/modules/mws.proactive/admin/css/app.45942f4f.css" rel="stylesheet">
 </head>
 <body>
 <div id="app">
