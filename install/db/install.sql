@@ -40,3 +40,6 @@ CREATE TABLE IF NOT EXISTS  `mws_abonent_status`
     `NAME` VARCHAR(255),
     PRIMARY KEY (`ID`)
 );
+INSERT INTO `mws_abonent_status` (NAME) VALUES ('Новое');
+INSERT INTO `mws_abonent_status` (NAME) VALUES ('Повторное');
+INSERT INTO `mws_abonent_status` (NAME) VALUES ('Обработано');
