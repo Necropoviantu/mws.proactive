@@ -124,7 +124,7 @@ class mwsProactiveEndpoint extends CBitrixComponent
             $id = self::abonent($item);
             if ($id != 'Error') {
                 $add = MetricsUnitTable::add([
-                    'METRIC_ID' => $item["metricId"],
+                    'METRIC_ASUO' => $item["metricId"],
                     'DATE_CREATE' => new \Bitrix\Main\Type\DateTime($item["dateCreate"], "Y-m-d H:i:s"),
                     'IP' => $item["ip"],
                     'PORT' => $item["port"],

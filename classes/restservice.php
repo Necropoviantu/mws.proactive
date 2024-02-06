@@ -93,6 +93,7 @@ class MwsProactiveRest extends IRestService
 
         $fields = [
             "NAME" => $query['metric']['NAME'],
+            "METRIC_ASUO"=> $query['metric']['METRIC_ASUO'],
             "MEANING" => $query['metric']['MEANING'],
             "STANDART" => $query['metric']['STANDART'],
             "DESCRIPTION" => $query['metric']['DESCRIPTION'],

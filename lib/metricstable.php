@@ -29,6 +29,13 @@ class MetricsTable extends DataManager
                 )
             ),
             new StringField(
+                'METRIC_ASUO',
+                array(
+                    'required' => true,
+                    'default_value' => '',
+                    'title' => Loc::getMessage("MWS_PROACTIVE_METRIC_ASUO")
+                )
+            ),new StringField(
                 'NAME',
                 array(
                     'required' => true,

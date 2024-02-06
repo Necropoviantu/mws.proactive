@@ -43,6 +43,13 @@ class MetricsUnitTable extends DataManager
                 )
             ),
             new StringField(
+                'METRIC_ASUO',
+                    array(
+                        'required'=>true,
+                        'default_value'=>'',
+                        'title'=>Loc::getMessage('MWS_PROACTIVE_METRIC_UNITS_METRIC_ASUO')
+                    )
+            ),   new StringField(
                 'IP',
                     array(
                         'required'=>true,
@@ -114,7 +121,7 @@ class MetricsUnitTable extends DataManager
             (new Reference(
                 'METRIC',
                 MetricsTable::class,
-                Join::on('this.METRIC_ID', 'ref.ID')
+                Join::on('this.METRIC_ASUO', 'ref.METRIC_ASUO')
             ))
 
         );

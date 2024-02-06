@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS `mws_metrics`
 (
     `ID`          INT NOT NULL AUTO_INCREMENT,
+    `METRIC_ASUO` VARCHAR(255),
     `NAME`        VARCHAR(255),
     `MEANING`     VARCHAR(255),
     `STANDART`    VARCHAR(255),
@@ -12,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `mws_metrics_units`
 (
      `ID`         INT NOT NULL AUTO_INCREMENT,
      `METRIC_ID`  INT NOT NULL,
+     `METRIC_ASUO` VARCHAR(255),
      `IP`        VARCHAR(255),
      `PORT`      VARCHAR(255),
      `ABONENT`   VARCHAR(255),
