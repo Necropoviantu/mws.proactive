@@ -6,6 +6,11 @@ Loc::loadLanguageFile(__FILE__);
 
 class mws_proactive extends CModule
 {
+
+    const SITE_ID = 's1';
+    const MENU_FILE = '/.top.menu.php';
+    const MENU_ITEM_LINK = '/local/proactiveUi/index.php';
+
     public $MODULE_ID = "mws.proactive";
     public $errors = "";
     static $events = array(
@@ -27,6 +32,7 @@ class mws_proactive extends CModule
 
         )
     );
+
     //TODO конструктор модуля
     public function __construct()
     {
@@ -38,11 +44,12 @@ class mws_proactive extends CModule
 
         $arModuleVersion = array();
         include __DIR__ . "/version.php";
-        if(is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion)){
+        if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion)) {
             $this->MODULE_VERSION = $arModuleVersion["VERSION"];
             $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
         }
     }
+
     //TODO  Запуск установки
     public function DoInstall()
     {
@@ -50,8 +57,11 @@ class mws_proactive extends CModule
         $this->InstallEvents();
         $this->installFiles();
         \Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
+        $arMenuItem = ['Проактивный/Аварии и ППР', self::MENU_ITEM_LINK, [], [], "IsModuleInstalled('mws.proactive')"];
+        $this->AddMenuItem($arMenuItem);
         return true;
     }
+
     //TODO Создание таблиц в БД
     public function InstallDB()
     {
@@ -64,6 +74,7 @@ class mws_proactive extends CModule
         return true;
 
     }
+
     //TODO Коприрование файлов и папок по нужным Директориям
     public function installFiles()
     {
@@ -86,16 +97,17 @@ class mws_proactive extends CModule
             true,
             true
         );
-//        CopyDirFiles(
-//            __DIR__ . "/local/apps",
-//            \Bitrix\Main\Application::getDocumentRoot() . "/local/apps/",
-//            true,
-//            true
-//        );
+        CopyDirFiles(
+            __DIR__ . "/local/proactiveUi",
+            \Bitrix\Main\Application::getDocumentRoot() . "/local/proactiveUi",
+            true,
+            true
+        );
 
         return true;
 
     }
+
     //TODO функция регистрауии евентов подключаем рест
     public function InstallEvents()
     {
@@ -114,8 +126,6 @@ class mws_proactive extends CModule
     }
 
 
-
-
     //TODO функция деинсталятор
     public function DoUninstall()
     {
@@ -124,18 +134,17 @@ class mws_proactive extends CModule
         if ($step < 2) {
             $APPLICATION->IncludeAdminFile(Loc::getMessage("MWS_1C_MODULE_UNINSTALL_TITLE", array("#MODULE_NAME#" => $this->MODULE_NAME)), __DIR__ . "/unstep1.php");
         } elseif ($step === 2) {
-            if (!array_key_exists('savedata', $_REQUEST) || $_REQUEST['savedata'] != 'Y'){
+            if (!array_key_exists('savedata', $_REQUEST) || $_REQUEST['savedata'] != 'Y') {
                 $this->UnInstallDB();
             }
             // удаление файлов модуля и евентов
             $this->UnInstallEvents();
 //            $this->UnInstallFiles();
-
+            $this->DeleteMenuItem(self::MENU_ITEM_LINK);
             \Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
 //            \Bitrix\Main\Config\Option::delete("mws.proactive"); удаление хранения выпушенного токена
             return true;
         }
-
 
 
         return true;
@@ -156,6 +165,7 @@ class mws_proactive extends CModule
 
         return true;
     }
+
     //TODO удаление евентов
     public function UnInstallEvents()
     {
@@ -163,6 +173,44 @@ class mws_proactive extends CModule
         foreach (static::$events as $event)
             $eventManager->unRegisterEventHandler($event["FROM_MODULE"], $event["FROM_EVENT"], $this->MODULE_ID, $event["TO_CLASS"], $event["TO_FUNCTION"]);
         return true;
+    }
+
+
+    public function AddMenuItem($menuItem, $menuFile = self::MENU_FILE, $siteID = self::SITE_ID, $pos = -1)
+    {
+        if (CModule::IncludeModule('fileman')) {
+            $arResult = CFileMan::GetMenuArray($_SERVER['DOCUMENT_ROOT'] . $menuFile);
+            $arMenuItems = $arResult["aMenuLinks"];
+            $menuTemplate = $arResult["sMenuTemplate"];
+
+            $bFound = false;
+            foreach ($arMenuItems as $item) {
+                if ($item[1] == $menuItem[1]) {
+                    $bFound = true;
+                }
+            }
+
+            if (!$bFound) {
+                $arMenuItems[] = $menuItem;
+                return CFileMan::SaveMenu(array($siteID, $menuFile), $arMenuItems, $menuTemplate);
+            }
+        }
+    }
+
+    public function DeleteMenuItem($menuLink, $menuFile = self::MENU_FILE, $siteID = self::SITE_ID)
+    {
+        if (CModule::IncludeModule("fileman")) {
+            $arResult = CFileMan::GetMenuArray($_SERVER['DOCUMENT_ROOT'] . $menuFile);
+            $arMenuItems = $arResult["aMenuLinks"];
+            $menuTemplate = $arResult["sMenuTemplate"];
+
+            foreach ($arMenuItems as $key => $item) {
+                if ($item[1] == $menuLink)
+                    unset($arMenuItems[$key]);
+            }
+
+            CFileMan::SaveMenu(array($siteID, $menuFile), $arMenuItems, $menuTemplate);
+        }
     }
 
 }

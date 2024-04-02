@@ -7,5 +7,6 @@
         'Mywebstor\Proactive\MetricsUnitTable' => 'lib/metricsunittable.php',
         'Mywebstor\Proactive\AbonentTable' => 'lib/abonenttable.php',
         'Mywebstor\Proactive\AbonentStatusTable' => 'lib/abonentstatustable.php',
+        'Mywebstor\Proactive\SettingsTable' => 'lib/settingstable.php',
     )
 );

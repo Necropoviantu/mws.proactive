@@ -84,7 +84,7 @@ class MetricsUnitTable extends DataManager
             new StringField(
                 'OLD_VALUE',
                 array(
-                    'required'=>true,
+
                     'default_value'=>true,
                     'title'=>Loc::getMessage('MWS_PROACTIVE_METRIC_UNITS_OLD_VALUE')
                 )
@@ -100,7 +100,7 @@ class MetricsUnitTable extends DataManager
             new StringField(
                 'DIFF_VALUE',
                 array(
-                    'required'=>true,
+
                     'default_value'=>true,
                     'title'=>Loc::getMessage('MWS_PROACTIVE_METRIC_UNITS_DIFF_VALUE')
                 )
