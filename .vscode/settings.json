@@ -1,0 +1,4 @@
+{
+    "intelephense.environment.includePaths": ["C:\\projects\\sources\\bitrix24_source"],
+    "intelephense.files.exclude": ["**/.last_version"]
+}

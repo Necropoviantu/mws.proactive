@@ -1,9 +1,11 @@
 <?php
 
+use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\Service;
 use Bitrix\Main\SystemException;
 use Mywebstor\Proactive\AbonentStatusTable;
 use Mywebstor\Proactive\AbonentTable;
+use Mywebstor\Proactive\IpCheckTable;
 use Mywebstor\Proactive\MetricsTable;
 use Mywebstor\Proactive\MetricsUnitTable;
 use Mywebstor\Proactive\SettingsTable;
@@ -49,12 +51,16 @@ class MwsProactiveRest extends IRestService
                 "mwsproactiverest.setting.getList" => array(__CLASS__, 'settingGetList'),
                 //TODO UI проактив
                 "mwsproactive.ui.proactiveTableUi" => array(__CLASS__, "getUiProactive"),
+                "mwsproactive.ui.proactiveSetDeal" => array(__CLASS__, 'proactiveSetDeal'),
 
-                'mwsproactiverest.abonen.update' => array(__CLASS__, 'abonentUpdate'),
+                'mwsproactiverest.abonent.update' => array(__CLASS__, 'abonentUpdate'),
+                "mwsproactiverest.ipcheck.getList" => array(__CLASS__, 'ipGetList'),
+                "mwsproactiverest.ipcheck.ipReleases" => array(__CLASS__, 'ipReleases')
             ),
 
         );
     }
+
 
     //TODO  Проверка наличия таблиц  подсчет размера
     public static function checkTableOnBase($query, $nav, \CRestServer $server)
@@ -84,7 +90,6 @@ class MwsProactiveRest extends IRestService
         }
 
         return $result;
-
     }
 
     //TODO получение токена
@@ -113,6 +118,7 @@ class MwsProactiveRest extends IRestService
             "STANDART" => $query['metric']['STANDART'],
             "DESCRIPTION" => $query['metric']['DESCRIPTION'],
             "TESTS" => $query['metric']['TESTS'],
+            "ALGORITM" => $query['metric']['ALGORITM'],
         ];
 
         $add = MetricsTable::add($fields);
@@ -121,11 +127,9 @@ class MwsProactiveRest extends IRestService
             if ($add->isSuccess()) {
                 return $add->getID();
             }
-
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
-
     }
 
     //TODO получение метрик по фильтру
@@ -160,7 +164,6 @@ class MwsProactiveRest extends IRestService
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
-
     }
 
     //TODO удаление метрики
@@ -201,11 +204,9 @@ class MwsProactiveRest extends IRestService
             if ($add->isSuccess()) {
                 return $add->getID();
             }
-
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
-
     }
 
     //TODO Обновление значения по метрике
@@ -220,7 +221,6 @@ class MwsProactiveRest extends IRestService
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
-
     }
 
     //TODO получение списка значений по метрике
@@ -280,7 +280,6 @@ class MwsProactiveRest extends IRestService
             if ($add->isSuccess()) {
                 return $add->getID();
             }
-
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
@@ -358,7 +357,7 @@ class MwsProactiveRest extends IRestService
 
         Bitrix\Main\Loader::includeModule('crm');
 
-        $typeid = $query['ENTITY_ID'];//Идентификатор смарт-процесса
+        $typeid = $query['ENTITY_ID']; //Идентификатор смарт-процесса
 
         $factory = Service\Container::getInstance()->getFactory($typeid);
 
@@ -369,7 +368,6 @@ class MwsProactiveRest extends IRestService
                 'ID' => $key,
                 'NAME' => $value['TITLE']
             ];
-
         }
 
 
@@ -394,7 +392,6 @@ class MwsProactiveRest extends IRestService
             ];
         }
         return $result;
-
     }
 
     // TODO получение списка элементов
@@ -411,7 +408,6 @@ class MwsProactiveRest extends IRestService
         $result = [];
         while ($row = $rs->fetch()) {
             $result[] = $row;
-
         }
         return $result;
     }
@@ -432,7 +428,6 @@ class MwsProactiveRest extends IRestService
             if ($add->isSuccess()) {
                 return $add->getID();
             }
-
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
@@ -471,21 +466,106 @@ class MwsProactiveRest extends IRestService
                 return $upd->isSuccess();
             }
         } catch (\SystemException $exception) {
-
         }
-
     }
 
     public static function getUiProactive($query, $nav, \CRestServer $server)
     {
         Bitrix\Main\Loader::includeModule('mws.proactive');
-
-        $q = Mywebstor\Proactive\AbonentTable::query();
-
-        $q->setSelect(array("ID", 'ABONENT', 'IP', 'PORT', 'STATUS_ID', 'DEAL_ID'));
+        Bitrix\Main\Loader::includeModule('crm');
 
 
-        $abonent = $q->fetchAll();
+        $dynamicTypeID = $query['enID']; // 
+        $container = \Bitrix\Crm\Service\Container::getInstance();
+
+
+        $dynamicDataClass = $container->getFactory($dynamicTypeID)->getDataClass();
+        $arFields = [
+            'filter' => $query['filter'] ? $query['filter'] : [],
+            'runtime' => array(
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'LK',
+                    $dynamicDataClass,
+                    ['this.ABONENT' => 'ref.UF_CRM_5_LS_NUMBER']
+                ),
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'DEAL',
+                    Bitrix\Crm\DealTable::getEntity(),
+                    ['=this.DEAL_ID' => 'ref.ID']
+                ),
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'USER',
+                    \Bitrix\Main\UserTable::getEntity(),
+                    ['=this.DEAL.CREATED_BY_ID' => 'ref.ID']
+                ),
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'STATUS',
+                    Bitrix\Crm\StatusTable::getEntity(),
+                    ['=this.DEAL.STAGE_ID' => 'ref.STATUS_ID']
+                ),
+
+
+            ),
+            "select" => array(
+                "ID", 'ABONENT', 'IP', 'PORT', 'STATUS_ID', 'DEAL_ID', 'DATE_CREATE', 'LK_ID' => 'LK.ID',
+                'LK_COMPANY_ID' => 'LK.COMPANY_ID',
+                'LK_CITY' => 'LK.UF_CRM_5_CITY_LIST',
+                'LK_ADDRES' => "LK.UF_CRM_5_ADDRESS_CONNECTION_TEXT",
+                'DEAL_STAGE' => 'DEAL.STAGE_ID',
+                'DEAL_CREATED_BY_ID' => 'DEAL.CREATED_BY_ID',
+                'USER_NAME' => "USER.NAME",
+                'USER_LAST_NAME' => "USER.LAST_NAME",
+                "STATUS_NAME" => 'STATUS.NAME'
+            ),
+            "count_total" => true,
+        ];
+
+
+        if ($query['limited']) {
+            if ($query['limited']['limit']) {
+                $arFields["limit"] = $query['limited']['limit'];
+            } else {
+                $arFields['limit'] = 10;
+            }
+
+            if ($query['limited']['page'] > 0) {
+
+                $arFields['offset'] =  (int)$query['limited']['limit'] * (int)$query['limited']['page'];
+            } else {
+                $arFields['offset'] = 0;
+            }
+        }
+
+
+        $q = Mywebstor\Proactive\AbonentTable::getList($arFields);
+
+        // $q->setSelect(array("ID", 'ABONENT', 'IP', 'PORT', 'STATUS_ID', 'DEAL_ID'));
+
+        $count = $q->getCount();
+
+        $abonent = [];
+
+        while ($row = $q->fetch()) {
+
+            $abonent[] = [
+                "ID" => $row["ID"],
+                'ABONENT' => $row['ABONENT'],
+                'IP' => $row['IP'],
+                'PORT' => $row['PORT'],
+                'STATUS_ID' => $row['STATUS_ID'],
+                'DEAL_ID' => $row['DEAL_ID'],
+                'DATE_CREATE' => $row['DATE_CREATE']->toString(),
+                "LK_ID" => $row['LK_ID'],
+                "LK_COMPANY_ID" => $row['LK_COMPANY_ID'],
+                "LK_CITY" => $row['LK_CITY'],
+                "abonentAddress" => $row['LK_ADDRES'],
+                'DEAL_STAGE' => $row['DEAL_STAGE'],
+                'STATUS_NAME' => $row['STATUS_NAME'],
+                'DEAL_CREATED_BY_ID' => $row['DEAL_CREATED_BY_ID'],
+                "USER_NAME" => $row['USER_NAME'] . ' ' .  $row['USER_LAST_NAME'],
+
+            ];
+        }
 
         foreach ($abonent as &$elem) {
             $elem['DROP_METRIC'] = 0;
@@ -494,28 +574,93 @@ class MwsProactiveRest extends IRestService
             $metrics = Mywebstor\Proactive\MetricsTable::getlist(['select' => ['ID', 'NAME', 'METRIC_ASUO']])->fetchAll();
             foreach ($metrics as $metric) {
                 $units = Mywebstor\Proactive\MetricsUnitTable::getlist(['order' => ['ID' => 'DESC'], 'filter' => ['ABONENT_ID' => $elem['ID'], "METRIC_ASUO" => $metric['METRIC_ASUO']], 'select' => ['ID', 'NEW_VALUE', 'DATE_CREATE']])->fetchAll();
-                $elem['METRIC'][] = [
-                    'NAME' => $metric['NAME'],
-                    'COUNT' => count($units),
-                    'LAST_METRIC' => $units[0]['NEW_VALUE'],
-                    'LAST_DATE' => $units[0]['DATE_CREATE']->toString(),
-                    'ABONENT_ID' => $elem['ID'],
-                    "METRIC_ASUO" => $metric['METRIC_ASUO'],
-                ];
-                $elem['DROP_METRIC'] = $elem['DROP_METRIC'] + count($units);
+                if (count($units) > 0) {
+
+                    $elem['METRIC'][] = [
+                        'NAME' => $metric['NAME'],
+                        'COUNT' => count($units),
+                        'LAST_METRIC' => $units[0]['NEW_VALUE'],
+                        'LAST_DATE' => $units[0]['DATE_CREATE'] ? $units[0]['DATE_CREATE']->toString() : "",
+                        'ABONENT_ID' => $elem['ID'],
+                        "METRIC_ASUO" => $metric['METRIC_ASUO'],
+                    ];
+                    $elem['DROP_METRIC'] = $elem['DROP_METRIC'] + count($units);
+                }
             }
         }
         unset($elem);
 
-        return $abonent;
-
-
+        return ['abonent' => $abonent, 'totalRecords' => $count];
     }
+    public static function proactiveSetDeal($query, $nav, \CRestServer $server)
+    {
+
+
+
+        \Bitrix\Main\Loader::includeModule('crm');
+        \Bitrix\Main\Loader::includeModule('mws.proactive');
+        $containerSmart = \Bitrix\Crm\Service\Container::getInstance();
+        $factorySmart = $containerSmart->getFactory(166);
+        $smart =  $factorySmart->getItem($query['lkId']);
+        $resSmart = $smart->getCompatibleData();
+
+        $fieldAliases = array(
+            "365" => "32",
+            "366" => "33",
+        );
+
+        $containerCompany = \Bitrix\Crm\Service\Container::getInstance();
+        $factoryCompany = $containerCompany->getFactory(\CCrmOwnerType::Company);
+        $company =  $factoryCompany->getItem($resSmart['COMPANY_ID']);
+        $resCompany = $company->getCompatibleData();
+
+
+
+
+        $container = \Bitrix\Crm\Service\Container::getInstance();
+        $factory = $container->getFactory(\CCrmOwnerType::Deal);
+        $item = $factory->createItem();
+        $item->set('PARENT_ID_166', $resSmart['ID']);
+        $item->set('CATEGORY_ID', 2);
+        $item->set('COMPANY_ID', $resSmart['COMPANY_ID']);
+        $item->set('UF_CRM_64EC912D44388', $fieldAliases[$resCompany['UF_CLIENT_TYPE']]);
+
+        $item->set('CONTACT_IDS', $resSmart['CONTACT_IDS']);
+        $item->set('UF_CRM_64EDAFBE9651B', $resSmart['UF_CRM_5_CITY_LIST']);
+        $item->set('UF_CRM_1694685035186', $resSmart['UF_CRM_5_ADDRESS_CONNECTION_TEXT']);
+
+        if (count($resSmart['UF_CRM_5_SERVICE_IB'])  ==  1) {
+            if (!in_array(81, $resSmart['UF_CRM_5_SERVICE_IB']) && !in_array(3535, $resSmart['UF_CRM_5_SERVICE_IB'])) {
+                $item->set('UF_CRM_1710254867', $resSmart['UF_CRM_5_SERVICE_IB'][0]); //услуга
+            }
+        }
+
+        $item->set('UF_CRM_1696253493798', $resSmart['UF_CRM_5_ADDRESS_ENTRANCE']);
+        $item->set('UF_CRM_1696253504422', $resSmart['UF_CRM_5_ADDRESS_FLOOR']);
+        $item->set('UF_CRM_1696253512245', $resSmart['UF_CRM_5_ADDRESS_APART']);
+
+        $operation = $factory->getAddOperation($item);
+        $saveResult = $operation
+            ->disableCheckFields()
+            ->disableCheckAccess()
+            ->disableAfterSaveActions()
+            ->enableAutomation()
+            ->enableBizProc()
+            ->launch();
+        $id = $saveResult->getId();
+
+        $upd = AbonentTable::update($query['abonentId'], ['DEAL_ID' => $id]);
+
+        return $id;
+    }
+
+
 
     public static function abonentUpdate($query, $nav, \CRestServer $server)
     {
+
         Bitrix\Main\Loader::includeModule('mws.proactive');
-        $upd = AbonentTable::update($query['ID'], $query['fields']);
+        $upd = AbonentTable::update($query['ID'], ['STATUS_ID' => $query['fields']['STATUS_ID']]);
         try {
             if ($upd->isSuccess()) {
                 return $upd->isSuccess();
@@ -523,5 +668,105 @@ class MwsProactiveRest extends IRestService
         } catch (\SystemException $exception) {
             return $exception->getMessage();
         }
+    }
+
+    //TODO получение ip для открепления
+    public static function ipGetList($query, $nav, \CRestServer $server)
+    {
+        global $USER;
+        // return $query['filter'];
+
+        Bitrix\Main\Loader::includeModule('mws.proactive');
+        Bitrix\Main\Loader::includeModule('crm');
+
+
+        $dynamicTypeID = $query['enID'];
+        $container = \Bitrix\Crm\Service\Container::getInstance();
+
+
+        $dynamicDataClass = $container->getFactory($dynamicTypeID)->getDataClass();
+        $arFields = array(
+            'filter' => $query['filter'] ? $query['filter'] : [],
+            'runtime' => array(
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'LK',
+                    $dynamicDataClass,
+                    ['=this.PERSONAL_ACCOUNT' => 'ref.UF_CRM_5_LS_NUMBER']
+                ),
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'USER',
+                    \Bitrix\Main\UserTable::getEntity(),
+                    ['=this.USER_ID' => 'ref.ID']
+                ),
+            ),
+            'select' => [
+                'ID', 'PERSONAL_ACCOUNT', 'PESONAL_DATA', 'IP_ADDRESS', 'GATEWAY', 'PORT', 'STATUS_ID', 'USER_ID', 'DATE_CREATE', 'DATE_CLOSED',
+                'LK_ID' => 'LK.ID',
+                'LK_COMPANY_ID' => 'LK.COMPANY_ID',
+                'LK_CITY' => 'LK.UF_CRM_5_CITY_LIST',
+                'USER_NAME' => "USER.NAME",
+                'USER_LAST_NAME' => "USER.LAST_NAME",
+            ],
+            "count_total" => true,
+        );
+
+        if ($query['limited']) {
+            if ($query['limited']['limit']) {
+                $arFields["limit"] = $query['limited']['limit'];
+            } else {
+                $arFields['limit'] = 10;
+            }
+
+            if ($query['limited']['page'] > 0) {
+
+                $arFields['offset'] =  (int)$query['limited']['limit'] * (int)$query['limited']['page'];
+            } else {
+                $arFields['offset'] = 0;
+            }
+        }
+
+
+        $getIp = IpCheckTable::getList($arFields);
+        $result = [];
+
+        $count = $getIp->getCount();
+        while ($row = $getIp->fetch()) {
+            $result[] =  [
+                "ID" => $row['ID'],
+                "PERSONAL_ACCOUNT" => $row['PERSONAL_ACCOUNT'],
+                "PESONAL_DATA" => $row['PESONAL_DATA'],
+                "IP_ADDRESS" => $row['IP_ADDRESS'],
+                "GATEWAY" => $row['GATEWAY'],
+                "PORT" => $row['PORT'],
+                "USER_ID" => $row['USER_ID'],
+                "STATUS_ID" => $row['STATUS_ID'],
+                "DATE_CREATE" => $row['DATE_CREATE']->toString(),
+                "DATE_CLOSED" => $row['DATE_CLOSED'] ? $row['DATE_CLOSED']->toString() : '',
+                "LK_ID" => $row['LK_ID'],
+                "LK_COMPANY_ID" => $row['LK_COMPANY_ID'],
+                "LK_CITY" => $row['LK_CITY'],
+                "USER_NAME" => $row['USER_NAME'] . ' ' .  $row['USER_LAST_NAME'],
+            ];
+        }
+
+
+        return ['ip' => $result, "totalRecords" => $count];
+    }
+
+    public static function ipReleases($query, $nav, \CRestServer $server)
+    {
+
+        $select = $query['elements'];
+
+        foreach ($select as $item) {
+
+            IpCheckTable::update($item['ID'], [
+                'STATUS_ID' => 2,
+                'DATE_CLOSED' => new \Bitrix\Main\Type\DateTime($item["dateCreate"], "Y-m-d H:i:s"),
+                'USER_ID' => (int)$query['userId'],
+            ]);
+        }
+
+        return 'OK';
     }
 }

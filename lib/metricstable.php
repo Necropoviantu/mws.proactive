@@ -35,10 +35,10 @@ class MetricsTable extends DataManager
                     'default_value' => '',
                     'title' => Loc::getMessage("MWS_PROACTIVE_METRIC_ASUO")
                 )
-            ),new StringField(
+            ), new StringField(
                 'NAME',
                 array(
-                    'required' => true,
+                    // 'required' => true,
                     'default_value' => '',
                     'title' => Loc::getMessage("MWS_PROACTIVE_METRIC_NAME")
                 )
@@ -46,7 +46,7 @@ class MetricsTable extends DataManager
             new StringField(
                 'MEANING',
                 array(
-                    "required" => true,
+                    // "required" => true,
                     "default_value" => '',
                     "title" => Loc::getMessage('MWS_PROACTIVE_METRIC_MEANING'),
                 )
@@ -55,7 +55,7 @@ class MetricsTable extends DataManager
             new StringField(
                 'STANDART',
                 array(
-                    "required" => true,
+                    // "required" => true,
                     "default_value" => '',
                     "title" => Loc::getMessage('MWS_PROACTIVE_METRIC_STANDART'),
                 )
@@ -63,7 +63,7 @@ class MetricsTable extends DataManager
             new StringField(
                 'DESCRIPTION',
                 array(
-                    "required" => true,
+                    // "required" => true,
                     "default_value" => '',
                     "title" => Loc::getMessage('MWS_PROACTIVE_METRIC_DESCRIPTION'),
                 )
@@ -71,12 +71,19 @@ class MetricsTable extends DataManager
             new StringField(
                 'TESTS',
                 array(
-                    "required" => true,
+                    // "required" => true,
                     "default_value" => '',
                     "title" => Loc::getMessage('MWS_PROACTIVE_METRIC_TESTS'),
                 )
             ),
+            new StringField(
+                'ALGORITM',
+                array(
+                    // "required" => true,
+                    "default_value" => '',
+                    "title" => Loc::getMessage('MWS_PROACTIVE_METRIC_ALGORITM'),
+                )
+            ),
         );
-
     }
 }

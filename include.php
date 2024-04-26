@@ -8,5 +8,6 @@
         'Mywebstor\Proactive\AbonentTable' => 'lib/abonenttable.php',
         'Mywebstor\Proactive\AbonentStatusTable' => 'lib/abonentstatustable.php',
         'Mywebstor\Proactive\SettingsTable' => 'lib/settingstable.php',
+        'Mywebstor\Proactive\IpCheckTable' => 'lib/ipchecktable.php',
     )
 );

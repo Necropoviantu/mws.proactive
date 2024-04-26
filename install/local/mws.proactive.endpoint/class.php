@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Application;
 use Mywebstor\Proactive\AbonentTable;
+use Mywebstor\Proactive\IpCheckTable;
 use Mywebstor\Proactive\MetricsUnitTable;
 
 class mwsProactiveEndpoint extends CBitrixComponent
@@ -41,6 +42,10 @@ class mwsProactiveEndpoint extends CBitrixComponent
                 $result = $this->setMetric();
                 $content = \Bitrix\Main\Web\Json::encode($result);
                 break;
+            case "setIpCheck":
+                $result =  $this->setIpCheck();
+                $content = \Bitrix\Main\Web\Json::encode($result);
+                break;
             default:
                 $this->showError("Unknown command \"{$this->command}\"");
                 break;
@@ -71,8 +76,6 @@ class mwsProactiveEndpoint extends CBitrixComponent
                 "Content-Type",
                 "application/json"
             );
-
-
     }
 
 
@@ -83,14 +86,14 @@ class mwsProactiveEndpoint extends CBitrixComponent
          * Функция нужна немного обезопасить  энд-поит
          */
 
-//        $this->token = unserialize(COption::GetOptionString("mws.proactive", "mws_proactive_integration_token", "a:0:{}"));
-//        if (!$this->token || strlen($this->token) !== 128)
-//            $this->showError("Access token is corrupted. Update it in Bitrix admin panel", self::STATUS_INTERNAL);
-//
-//        $requestToken = $this->request->getHeader("Bitrix-Mws-Proactive-Integration-Token");
-//
-//        if (!$requestToken || $requestToken != $this->token)
-//            $this->showError("Authorization error", self::STATUS_UNAUTHORIZED);
+        //        $this->token = unserialize(COption::GetOptionString("mws.proactive", "mws_proactive_integration_token", "a:0:{}"));
+        //        if (!$this->token || strlen($this->token) !== 128)
+        //            $this->showError("Access token is corrupted. Update it in Bitrix admin panel", self::STATUS_INTERNAL);
+        //
+        //        $requestToken = $this->request->getHeader("Bitrix-Mws-Proactive-Integration-Token");
+        //
+        //        if (!$requestToken || $requestToken != $this->token)
+        //            $this->showError("Authorization error", self::STATUS_UNAUTHORIZED);
 
         $command = $this->request->getHeader("Bitrix-Mws-Proactive-Integration-Command");
         if (isset($command) && !empty($command))
@@ -144,7 +147,7 @@ class mwsProactiveEndpoint extends CBitrixComponent
     {
         /*
          * TODO  логика Создания записи в Проактивном сервисе
-         * 1  получаем запрос из Функции добавление метрик из АСУО
+         * 1 получаем запрос из Функции добавление метрик из АСУО
          * 2 Производим поиск по таблице записей Проактивного сервиса
          * 3 Проверяем что результат не пуст  есть записи в стадии 1 Новые
          * 4 Возвращаем Айдишник самой новой
@@ -193,14 +196,37 @@ class mwsProactiveEndpoint extends CBitrixComponent
                 }
             }
         }
-
     }
 
 
     protected function setAccident($accidents)
     {
+    }
 
+    protected function setIpCheck()
+    {
+        \Bitrix\Main\Loader::includeModule('mws.proactive');
+        if ($this->request->getJsonList()->isEmpty())
+            $this->showError("Incorrect or empty JSON");
+        $result = array(
+            "status" => "success"
+        );
+        $request = $this->request->getJsonList()->toArray();
 
+        foreach ($request as $item) {
+
+            $add = IpCheckTable::add([
+                'PERSONAL_ACCOUNT' => $item["abonent"],
+                'PESONAL_DATA' => $item["person"],
+                'IP_ADDRESS' => $item["ip"],
+                'GATEWAY' => $item["gateway"],
+                'PORT' => $item["port"],
+                'STATUS_ID' => 1,
+                'DATE_CREATE' => new \Bitrix\Main\Type\DateTime($item["dateCreate"], "Y-m-d H:i:s"),
+            ]);
+        }
+
+        return $result;
     }
 
 
@@ -226,6 +252,4 @@ class mwsProactiveEndpoint extends CBitrixComponent
     {
         Application::getInstance()->end();
     }
-
-
 }
